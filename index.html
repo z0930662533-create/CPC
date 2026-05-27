@@ -93,6 +93,48 @@
             margin-bottom: 0;
             letter-spacing: 2px;     /* 字母間距 */
         }
+        /* ================= 🌟 手機/平板適應設定 (RWD) ================= */
+        
+        /* 當螢幕寬度小於 900px (平板尺寸) 時 */
+        @media (max-width: 900px) {
+            .main-title {
+                font-size: 42px;         /* 標題稍微縮小 */
+                text-align: center;      /* 確保多行時文字置中 */
+            }
+            .sub-title {
+                font-size: 28px;
+                text-align: center;
+            }
+            .gallery-container {
+                gap: 30px;               /* 縮小圖片之間的間距 */
+            }
+        }
+
+        /* 當螢幕寬度小於 600px (手機尺寸) 時 */
+        @media (max-width: 600px) {
+            .main-title {
+                font-size: 32px;         /* 手機版標題大幅縮小，避免爆框 */
+                margin-top: 40px;        /* 頂部距離稍微縮減 */
+                padding: 0 10px;         /* 左右加一點內距，避免字貼齊螢幕邊緣 */
+            }
+            .sub-title {
+                font-size: 20px;
+                margin-bottom: 30px;
+            }
+            .gallery-container {
+                flex-direction: column;  /* 🌟 手機版強制改為「由上往下」垂直排列 */
+                gap: 20px;               /* 手機版的間距再縮小 */
+            }
+            .card {
+                width: 80%;              /* 讓卡片寬度佔據手機螢幕的 80% */
+                max-width: 300px;        /* 限制最大寬度，避免在某些大手機上變太巨型 */
+            }
+            .card img {
+                width: 100%;             /* 🌟 核心：圖片寬度自適應卡片的寬度 */
+                height: auto;            /* 讓高度依照圖片比例自動縮放 */
+                aspect-ratio: 5 / 4;     /* 維持你原本 250x200 (即 5:4) 的完美比例 */
+            }
+        }
     </style>
 </head>
 <body>
