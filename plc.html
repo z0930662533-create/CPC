@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLC 設備資料 - 各工場列表</title>
+    <style>
+        /* ================= 基礎全域設定 ================= */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+
+        /* ================= 第一排字設定 ================= */
+        .main-title {
+            font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif; 
+            font-size: 42px;                                         
+            color: #003366; 
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        /* ================= 第二排字設定 ================= */
+        .sub-title {
+            font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif; 
+            font-size: 24px;                                         
+            color: #666666; 
+            margin-bottom: 40px;
+            border-bottom: 2px solid #003366; 
+            padding-bottom: 10px;
+            width: 200px;
+            text-align: center;
+        }
+
+        /* ================= 🌟 工場列表容器 (改為網格排列) ================= */
+        .factory-container {
+            display: grid;                                 /* 啟用 CSS Grid 網格系統 */
+            grid-template-columns: repeat(3, 1fr);         /* 🌟 核心魔法：設定為 3 欄，每欄等寬 (1fr) */
+            gap: 25px;                                     /* 卡片之間的上下左右間距 */
+            width: 90%;
+            max-width: 1100px;                             /* 因為是三個並排，所以把最大寬度拉寬 */
+        }
+
+        /* ================= 工場字串連結預設樣式 ================= */
+        .factory-link {
+            display: block;
+            text-decoration: none; 
+            background-color: #ffffff; 
+            padding: 25px 20px;                            /* 調整內距讓方塊看起來更飽滿 */
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            color: #333333;
+            text-align: center;                            /* 🌟 讓三個並排時，文字置中比較好看 */
+            
+            font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif; 
+            font-size: 22px;                                         
+            font-weight: 500;
+            
+            transition: all 0.3s ease;
+            border-left: 6px solid transparent; 
+            box-sizing: border-box;                        /* 確保邊框不會撐破寬度 */
+        }
+
+        /* ================= 滑鼠移過去時的動畫效果 (Hover) ================= */
+        .factory-link:hover {
+            transform: translateY(-8px);               /* 🌟 因為改為並排，改成「往上浮起」視覺效果會比向右更好 */
+            background-color: #e6f2ff;                 
+            color: #003366;                            
+            border-left: 6px solid #d13030;            
+            box-shadow: 0 8px 20px rgba(0, 51, 102, 0.15); 
+        }
+
+        /* ================= 🌟 手機/小螢幕適應設定 (RWD) ================= */
+        @media (max-width: 900px) {
+            .factory-container {
+                grid-template-columns: repeat(2, 1fr); /* 螢幕小於900px時，自動變成 2 個並排 */
+            }
+        }
+        @media (max-width: 600px) {
+            .factory-container {
+                grid-template-columns: repeat(1, 1fr); /* 螢幕小於600px (手機) 時，自動變回 1 個一排 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="main-title">PLC 設備資料</h1>
+    <h2 class="sub-title">各工場列表</h2>
+
+    <div class="factory-container">
+        
+        <a href="UTG/up1.html" class="factory-link">第一蒸餾工場</a>
+        <a href="plc-rds.html" class="factory-link">重油加氫脫硫工場</a>
+        <a href="plc-rcc.html" class="factory-link">流體催化裂化工場</a>
+        <a href="plc-utility.html" class="factory-link">公用設備工場</a>
+        <a href="plc-water.html" class="factory-link">廢水處理工場</a>
+        <a href="plc-tank.html" class="factory-link">儲槽區</a>
+        <a href="plc-other.html" class="factory-link">其他外場單元</a>
+
+    </div>
+
+</body>
+</html>
