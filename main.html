@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>首頁</title>
+  <style>
+    body {
+      text-align: center;
+      padding-top: 100px;
+      font-family: Arial, sans-serif;
+    }
+    img {
+      width: 200px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    img:hover {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>這是首頁</h1>
+  <p>點擊圖片前往下一頁</p>
+
+  <img src="next.jpg" alt="下一頁" onclick="goNextPage()">
+
+  <script>
+    function goNextPage() {
+      // 前往下一頁
+      window.location.href = "page2.html";
+    }
+  </script>
+</body>
+</html>
