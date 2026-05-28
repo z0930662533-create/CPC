@@ -64,6 +64,15 @@
             font-family: '微軟正黑體';
         }
 
+        /* ================= 🌟 新增：設備狀態紅字樣式 ================= */
+        .equip-status-text {
+            color: #d13030;       /* 使用紅字 (這裡用中油紅) */
+            font-weight: bold;    /* 粗體字 */
+            margin-left: 20px;    /* 讓它跟前面的下拉選單保持一點距離 */
+            font-size: 18px;      /* 字體大小 */
+            letter-spacing: 1px;  /* 稍微拉開字距會比較好看 */
+        }
+
         /* 單選按鈕(Radio)樣式 */
         .radio-group {
             display: flex;
@@ -143,10 +152,10 @@
     <div class="control-row">
         <div class="control-label">設備編號</div>
         <select id="equip-id">
-            <option value="C-101">C-101</option>
-            <option value="C-102">C-102</option>
-            <option value="V-205">V-205</option>
+            <option value="BA-101">BA-101</option>
+            <option value="TOP1-ESD">ESD</option>
         </select>
+        <span id="equip-status" class="equip-status-text"></span>
     </div>
 
     <div class="control-row">
@@ -172,6 +181,12 @@
 </div>
 
 <script>
+
+    // ================= 🌟 新增：建立「設備對應字串」資料庫 =================
+    const statusDatabase = {
+        'BA-101': '',
+        'TOP1-ESD': ''
+    };
     // ================= 1. 定義選單選項 =================
     const infoOptions = {
         table: [
@@ -187,53 +202,50 @@
 
     // ================= 2. 定義表格固定標題 (最上排不動) =================
     const tableHeaders = {
-        config: `<tr><th>模組名稱</th><th>型號</th><th>數量</th><th>描述</th></tr>`,
+        config: `<tr><th>模組名稱</th><th>型號</th><th>數量</th><th>廠牌</th></tr>`,
         ip:     `<tr><th>介面</th><th>IP 位址</th><th>子網路遮罩</th></tr>`,
         auth:   `<tr><th>權限等級</th><th>帳號</th><th>密碼</th></tr>`
     };
 
     // ================= 3. 建立「表格」資料庫 (依設備編號分類) =================
     const tableDatabase = {
-        'C-101': {
-            config: `<tr><td>CPU</td><td>Q03UDVCPU</td><td>0</td><td>正常</td></tr>
-                     <tr><td>Power</td><td>Q61P</td><td>電源槽</td><td>正常</td></tr>`,
-            ip:     `<tr><td>Ethernet 1</td><td>192.168.1.10</td><td>255.255.255.0</td></tr>`,
-            auth:   `<tr><td>Admin</td><td>最高權限</td><td>儀電組 電子課</td></tr>`
+        'BA-101': {
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
+                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
+                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`,
+            
         },
-        'C-102': {
-            config: `<tr><td>CPU</td><td>Q06UDVCPU</td><td>0</td><td>正常</td></tr>
-                     <tr><td>Input</td><td>QX40</td><td>1</td><td>異常 (待修)</td></tr>
-                     <tr><td>Output</td><td>QY40P</td><td>2</td><td>正常</td></tr>`,
-            ip:     `<tr><td>Ethernet 1</td><td>192.168.1.20</td><td>255.255.255.0</td></tr>`,
-            auth:   `<tr><td>Admin</td><td>最高權限</td><td>儀電組 電子課</td></tr>
-                     <tr><td>Operator</td><td>僅檢視</td><td>操作組</td></tr>`
-        },
-        'V-205': {
-            // 假設 V-205 只有配置資料，沒有 IP 資料
-            config: `<tr><td>CPU</td><td>FX5U-32MR/ES</td><td>本體</td><td>正常</td></tr>`
+        'TOP1-ESD': {
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
+                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
+                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`,
+           
         }
+        
     };
 
     // ================= 4. 建立「圖面」資料庫 (依設備編號分類) =================
     const imageDatabase = {
-        'C-101': {
-            location: ['PLC/C-101/location-1.jpg', 'PLC/C-101/location-2.jpg'],
-            panel:    ['PLC/C-101/panel-front.jpg', 'PLC/C-101/panel-side.jpg']
+        'BA-101': {
+            
+            panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
         },
-        'C-102': {
-            location: ['PLC/C-102/location-1.jpg'],
-            panel:    ['PLC/C-102/panel-front.jpg', 'PLC/C-102/panel-wiring.jpg']
-        },
-        'V-205': {
-            // V-205 只有位置圖，沒有盤內配置圖
-            location: ['PLC/V-205/location-main.jpg']
+        'TOP1-ESD': {
+            
+            panel:    ['DHDS2/C-102A.jpg', 'DHDS2/C-102B.jpg']
         }
+        
     };
 
     // ================= 5. 抓取 HTML 元素 =================
     const radios = document.querySelectorAll('input[name="display-type"]');
     const infoSelect = document.getElementById('equip-info');
     const equipSelect = document.getElementById('equip-id'); // 第二排的設備編號下拉選單
+    const statusText = document.getElementById('equip-status'); // 抓取紅色字串元素
     const displayArea = document.getElementById('display-area');
 
     // ================= 6. 核心功能函式 =================
@@ -260,6 +272,12 @@
         const selectedInfo = infoSelect.value;
         const currentEquipId = equipSelect.value; // 取得當前選擇的設備編號 (例: C-101)
         
+        if (statusDatabase[currentEquipId]) {
+            statusText.textContent = statusDatabase[currentEquipId];
+        } else {
+            statusText.textContent = ''; // 如果資料庫沒建檔，就保持空白
+        }
+
         displayArea.innerHTML = ''; // 清空顯示區
 
         if (selectedType === 'table') {
@@ -267,7 +285,7 @@
             const header = tableHeaders[selectedInfo];
             
             // 2. 嘗試去資料庫撈取該設備的資料，如果沒有建檔，就顯示「無資料」
-            let bodyRows = `<tr><td colspan="4" style="text-align:center; color:red;">目前尚無 ${currentEquipId} 的資料</td></tr>`;
+            let bodyRows = `<tr><td colspan="4" style="text-align:center; color:red;">目前尚無資料</td></tr>`;
             
             if (tableDatabase[currentEquipId] && tableDatabase[currentEquipId][selectedInfo]) {
                 bodyRows = tableDatabase[currentEquipId][selectedInfo];
@@ -296,7 +314,7 @@
                     galleryDiv.appendChild(img);
                 });
             } else {
-                galleryDiv.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無 ${currentEquipId} 的圖檔</p>`;
+                galleryDiv.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無圖檔</p>`;
             }
             
             displayArea.appendChild(galleryDiv);

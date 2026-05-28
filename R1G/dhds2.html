@@ -154,6 +154,7 @@
         <select id="equip-id">
             <option value="C-101">C-101A/B</option>
             <option value="C-102">C-102A/B</option>
+            <option value="DHDS2-ESD">ESD</option>
         </select>
         <span id="equip-status" class="equip-status-text"></span>
     </div>
@@ -186,7 +187,7 @@
     const statusDatabase = {
         'C-101': '110R156(更新)',
         'C-102': '110R156(更新)',
-        'V-205': '現場監控單元'
+        'DHDS2-ESD': ''
     };
     // ================= 1. 定義選單選項 =================
     const infoOptions = {
@@ -203,7 +204,7 @@
 
     // ================= 2. 定義表格固定標題 (最上排不動) =================
     const tableHeaders = {
-        config: `<tr><th>模組名稱</th><th>型號</th><th>數量</th><th>描述</th></tr>`,
+        config: `<tr><th>模組名稱</th><th>型號</th><th>數量</th><th>廠牌</th></tr>`,
         ip:     `<tr><th>介面</th><th>IP 位址</th><th>子網路遮罩</th></tr>`,
         auth:   `<tr><th>權限等級</th><th>帳號</th><th>密碼</th></tr>`
     };
@@ -211,24 +212,24 @@
     // ================= 3. 建立「表格」資料庫 (依設備編號分類) =================
     const tableDatabase = {
         'C-101': {
-            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
-                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
-                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
-                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
-                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`,
-            auth:   `<tr><td>Admin</td><td>最高權限</td><td>儀電組 電子課</td></tr>`
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>4</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>5</td><td>AB</td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`,
+            
         },
         'C-102': {
-            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
-                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
-                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
-                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
-                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`,
-            auth:   `<tr><td>Admin</td><td>最高權限</td><td>儀電組 電子課</td></tr>`
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>4</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>5</td><td>AB</td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`,
+           
         },
-        'V-205': {
+        'DHDS2-ESD': {
             // 假設 V-205 只有配置資料，沒有 IP 資料
-            config: `<tr><td>CPU</td><td>FX5U-32MR/ES</td><td>本體</td><td>正常</td></tr>`
+            
         }
     };
 
@@ -242,9 +243,9 @@
             
             panel:    ['DHDS2/C-102A.jpg', 'DHDS2/C-102B.jpg']
         },
-        'V-205': {
+        'DHDS2-ESD': {
             // V-205 只有位置圖，沒有盤內配置圖
-            location: ['PLC/V-205/location-main.jpg']
+            
         }
     };
 
@@ -292,7 +293,7 @@
             const header = tableHeaders[selectedInfo];
             
             // 2. 嘗試去資料庫撈取該設備的資料，如果沒有建檔，就顯示「無資料」
-            let bodyRows = `<tr><td colspan="4" style="text-align:center; color:red;">目前尚無 ${currentEquipId} 的資料</td></tr>`;
+            let bodyRows = `<tr><td colspan="4" style="text-align:center; color:red;">目前尚無資料</td></tr>`;
             
             if (tableDatabase[currentEquipId] && tableDatabase[currentEquipId][selectedInfo]) {
                 bodyRows = tableDatabase[currentEquipId][selectedInfo];
@@ -321,7 +322,7 @@
                     galleryDiv.appendChild(img);
                 });
             } else {
-                galleryDiv.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無 ${currentEquipId} 的圖檔</p>`;
+                galleryDiv.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無圖檔</p>`;
             }
             
             displayArea.appendChild(galleryDiv);
