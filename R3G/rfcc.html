@@ -159,11 +159,16 @@
             <option value="F-7101">F-7101</option>
             <option value="MA-7606">MA-7606</option>
             <option value="PALL">PALL</option>
-            <option value="PDCV-1003">PDCV-1003B/C</option>
+            <option value="PDCV-1003A">PDCV-1003A</option>
+            <option value="PDCV-1003B">PDCV-1003B</option>
+            <option value="PDCV-1003C">PDCV-1003C</option>
             <option value="PKG-7101">PKG-7101A/B</option>
             <option value="PKG-7901">PKG-7901A/B</option>
             <option value="PKG-7902">PKG-7902A/B</option>
             <option value="RFCC-ESD">ESD</option>
+            <option value="V-7601">V-7601A/B</option>
+            <option value="C-7601">C-7601A/B/C</option>
+            <option value="C-7202">C-7202A/B</option>
         </select>
         <span id="equip-status" class="equip-status-text"></span>
     </div>
@@ -200,11 +205,16 @@
         'F-7101': '',
         'MA-7606': '',
         'PALL': '',
-        'PDCV-1003': '',
+        'PDCV-1003A': '',
+        'PDCV-1003B': '',
+        'PDCV-1003C': '',
         'PKG-7101': '',
         'PKG-7901': '',
         'PKG-7902': '',
-        'RFCC-ESD': ''
+        'RFCC-ESD': '',
+        'V-7601': '',
+        'C-7601': '',
+        'C-7202': ''
     };
     // ================= 1. 定義選單選項 =================
     const infoOptions = {
@@ -229,7 +239,15 @@
     // ================= 3. 建立「表格」資料庫 (依設備編號分類) =================
     const tableDatabase = {
         'C-7901': {
-           
+           config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L33ER</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 32P</td><td>1769-IQ32</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OA16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1769-OF4CI</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RTD</td><td>1769-IR6</td><td>4</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>MVI56E-MCM</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-T7C22D9P</td><td>1</td><td>AB</td></tr>`,
             
         },
         'Flare4': {
@@ -250,7 +268,39 @@
             
             
         },
-         'PDCV-1003': {
+         'PDCV-1003A': {
+            config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L71</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR IO</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR ETH</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>MVI56E-MCM</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RS-232/485 Converter</td><td>1783-ETAP</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A7</td><td>3</td><td>AB</td></tr>`,
+            
+        },
+         'PDCV-1003B': {
+            config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L71</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR IO</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR ETH</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>1756-Module IO</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RS-232/485 Converter</td><td>1783-ETAP</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A7</td><td>3</td><td>AB</td></tr>`,
+            
+        },
+         'PDCV-1003C': {
             config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
                     <tr><td>CPU</td><td>1756-L61B</td><td>2</td><td>AB</td></tr>
                     <tr><td>Communication</td><td>1756-CN2R</td><td>2</td><td>AB</td></tr>
@@ -262,7 +312,7 @@
                     <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
                     <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
                     <tr><td>RS-232/485 Converter</td><td>1761-NET-AIC</td><td>1</td><td>AB</td></tr>
-                    <tr><td>HMI Interface</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
                     <tr><td>HMI</td><td>2711P-RN15C</td><td>1</td><td>AB</td></tr>`,
             
         },
@@ -277,6 +327,39 @@
         },
         'RFCC-ESD': {
            
+           
+        },
+        'V-7601': {
+           config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1769-IQ16/A</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 32P</td><td>1769-IQ32/A</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DO(Relay) 16P</td><td>1769-OW16/A</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8/A</td><td>1</td><td>AB</td></tr>`,
+           
+        },
+        'C-7601': {
+           config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L73/td><td>1</td><td>AB</td></tr>
+                    <tr><td>Ethernet</td><td>1756-EN2TR/td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16I/A</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`,
+           
+        },
+        'C-7202': {
+           config: `<tr><td>Power Supply</td><td>1769-PA4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L33ER/td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1769-IQ16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1769-OB16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AI 4P</td><td>1769-IF4XOF2</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1769-OF4CI</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RTD</td><td>1769-IR6</td><td>3</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-T6C21D8S</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Terminator</td><td>1769-ECR</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>SD Card</td><td>1784-SDHC8</td><td>1</td><td>AB</td></tr>`,
            
         }
     };
@@ -307,7 +390,15 @@
             
             panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
         },
-        'PDCV-1003': {
+        'PDCV-1003A': {
+            
+            panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
+        },
+        'PDCV-1003B': {
+            
+            panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
+        },
+        'PDCV-1003C': {
             
             panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
         },
@@ -321,6 +412,18 @@
             
         },
         'RFCC-ESD': {
+           
+           
+        },
+        'V-7601': {
+           
+           
+        },
+        'C-7601': {
+           
+           
+        },
+        'C-7202': {
            
            
         }
