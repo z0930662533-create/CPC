@@ -168,6 +168,9 @@
             <label class="radio-item">
                 <input type="radio" name="display-type" value="image"> 圖面
             </label>
+            <label class="radio-item">
+                <input type="radio" name="display-type" value="pdf"> 連線方式
+            </label>
         </div>
     </div>
 
@@ -199,6 +202,9 @@
         image: [
             { value: 'location', text: '位置' },
             { value: 'panel', text: '盤內配置' }
+        ],
+        pdf: [
+            { value: 'manual', text: '連線方式' }
         ]
     };
 
@@ -263,6 +269,21 @@
         'REF1-ESD': {
             
             panel:    ['DHDS2/C-102A.jpg', 'DHDS2/C-102B.jpg']
+        }
+    };
+
+    const pdfDatabase = {
+        'Flare1': {
+            
+            manual:   'REF1/RRR2.pdf'
+        },
+        'GB-251': {
+            
+            manual:   'PLC/C-101/C101-manual.pdf'
+        },
+        'REF1-ESD': {
+            
+            manual:   'PLC/C-101/C101-manual.pdf'
         }
     };
 
@@ -343,6 +364,26 @@
             }
             
             displayArea.appendChild(galleryDiv);
+        }
+        else if (selectedType === 'pdf') {
+            let pdfPath = '';
+            // 去 PDF 資料庫尋找對應的路徑
+            if (pdfDatabase[currentEquipId] && pdfDatabase[currentEquipId][selectedInfo]) {
+                pdfPath = pdfDatabase[currentEquipId][selectedInfo];
+            }
+            
+            // 如果有找到路徑，就產生 iframe 標籤來嵌入 PDF
+            if (pdfPath) {
+                // height: 600px 可以確保 PDF 顯示範圍夠大，使用者可以直接在裡面滾動
+                displayArea.innerHTML = `
+                    <iframe src="${pdfPath}" width="100%" height="600px" style="border: none; border-radius: 8px;">
+                        很抱歉，您的瀏覽器不支援直接預覽 PDF。請下載後查看。
+                    </iframe>
+                `;
+            } else {
+                // 如果沒有資料，顯示防呆提示
+                displayArea.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無 ${currentEquipId} 的 PDF 檔案</p>`;
+            }
         }
     }
 

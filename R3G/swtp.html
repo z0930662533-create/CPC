@@ -152,7 +152,8 @@
     <div class="control-row">
         <div class="control-label">設備編號</div>
         <select id="equip-id">
-            <option value="C-8002">C-8002</option>
+            <option value="3PHASE">三相分離機</option>
+            <option value="Liquid">流體化床焚化爐</option>
         </select>
         <span id="equip-status" class="equip-status-text"></span>
     </div>
@@ -183,7 +184,8 @@
 
     // ================= 🌟 新增：建立「設備對應字串」資料庫 =================
     const statusDatabase = {
-        'C-8002': ''
+        '3PHASE': '',
+         'Liquid': ''
     };
     // ================= 1. 定義選單選項 =================
     const infoOptions = {
@@ -208,12 +210,22 @@
     // ================= 3. 建立「表格」資料庫 (依設備編號分類) =================
     const tableDatabase = {
         
-        'C-8002': {
-            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
-                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
-                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
-                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
-                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`,
+        '3PHASE': {
+            config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 32P</td><td>1769-IQ32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 32P</td><td>1769-OB32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1769-IF16C/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1769-OF8C/A</td><td>1</td><td>AB</td></tr>`,
+           
+        },
+        'Liquid': {
+            config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 32P</td><td>1769-IQ32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 32P</td><td>1769-OB32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1769-IF16C/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1769-OF8C/A</td><td>1</td><td>AB</td></tr>`,
            
         }
         
@@ -222,7 +234,11 @@
     // ================= 4. 建立「圖面」資料庫 (依設備編號分類) =================
     const imageDatabase = {
         
-        'C-8002': {
+        '3PHASE': {
+            
+            panel:    ['DHDS2/C-102A.jpg', 'DHDS2/C-102B.jpg']
+        },
+        'Liquid': {
             
             panel:    ['DHDS2/C-102A.jpg', 'DHDS2/C-102B.jpg']
         }

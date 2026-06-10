@@ -157,6 +157,7 @@
             <option value="PSA2-3H">PSA2-3H</option>
             <option value="C-2003A/B-2H">C-2003A/B-2H</option>
             <option value="2HA">警報盤-2H</option>
+            <option value="C-2203B-2H">C-2203B-2H</option>
             <option value="ESD-2H">ESD-2H</option>
             <option value="ESD-3H">ESD-3H</option>
         </select>
@@ -194,6 +195,7 @@
         'PSA2-3H': '',
         'C-2003A/B-2H': '',
         '2HA': '',
+        'C-2203B-2H': '',
         'ESD-2H': '',
         'ESD-3H': ''
     };
@@ -251,11 +253,11 @@
             
         },
          'C-2003A/B-2H': {
-            config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
-                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
-                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
-                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
-                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>`,
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                      <tr><td>Ethernet</td><td>1756-EN2T</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>3</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>4</td><td>AB</td></tr>`,
             
         },
          '2HA': {
@@ -264,6 +266,15 @@
                      <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
                      <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
                      <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>`,
+            
+        },
+        'C-2203B-2H': {
+            config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>3</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>4</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`,
+            
             
         },
          'ESD-2H': {
@@ -305,6 +316,9 @@
         '2HA': {
             
             panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
+        },
+         'C-2203B-2H': {
+           panel:    ['DHDS2/C-101A.jpg', 'DHDS2/C-101B.jpg']
         },
         'ESD-2H': {
             
