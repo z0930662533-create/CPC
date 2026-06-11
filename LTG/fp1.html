@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLC - 第一灌裝工場</title>
+    <script>
+    // 通行證檢查：如果 sessionStorage 裡面沒有 isLoggedIn = true 的紀錄，就直接踢回登入頁面
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "login.html";
+    }
+    </script>
     <style>
         /* ================= 基礎設定 ================= */
         body {
