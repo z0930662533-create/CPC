@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系統登入 - 台灣中油股份有限公司</title>
+    <style>
+        body {
+            font-family: '微軟正黑體', sans-serif;
+            background-image: url('images/bg.jpg'); /* 可以放你的背景圖 */
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            background-blend-mode: overlay;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .login-box h2 {
+            color: #003366;
+            margin-bottom: 30px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .login-btn {
+            background-color: #d13030; /* 中油紅 */
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .login-btn:hover { background-color: #a32626; }
+        .error-message {
+            color: red;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none; /* 預設隱藏 */
+        }
+        /* 讓按鈕在載入時有視覺變化 */
+        .loading {
+            background-color: #ccc !important;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>設備資料系統登入</h2>
+        <div class="input-group">
+            <label for="username">帳號</label>
+            <input type="text" id="username" placeholder="請輸入帳號">
+        </div>
+        <div class="input-group">
+            <label for="password">密碼</label>
+            <input type="password" id="password" placeholder="請輸入密碼">
+        </div>
+        <button id="loginBtn" class="login-btn" onclick="attemptLogin()">登入</button>
+        <div id="errorMsg" class="error-message">帳號或密碼錯誤</div>
+    </div>
+
+    <script>
+        // 🌟 請將這串網址換成你剛剛在 Google Apps Script 部署得到的 URL
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwyas88Ej6YlX03g79q9GXXb_NlH_WKHX_d1RkZuB4E4b_444if2IlDK--4zAbAyB-V/exec';
+
+        function attemptLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if(!user || !pass) {
+                errorMsg.textContent = "請輸入帳號與密碼";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            // 按鈕變為載入中狀態
+            btn.textContent = "驗證中...";
+            btn.classList.add("loading");
+            errorMsg.style.display = "none";
+
+            // 準備傳送給 Google 的資料
+            const payload = {
+                username: user,
+                password: pass
+            };
+
+            // 使用 fetch API 發送 POST 請求
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "success") {
+                    // 🌟 登入成功！在瀏覽器中發放一個「通行證」
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    
+                    // 跳轉到你的系統首頁
+                    window.location.href = "index.html"; 
+                } else {
+                    // 登入失敗顯示錯誤
+                    errorMsg.textContent = data.message;
+                    errorMsg.style.display = "block";
+                    btn.textContent = "登入";
+                    btn.classList.remove("loading");
+                }
+            })
+            .catch(error => {
+                errorMsg.textContent = "網路連線異常，請稍後再試";
+                errorMsg.style.display = "block";
+                btn.textContent = "登入";
+                btn.classList.remove("loading");
+            });
+        }
+    </script>
+</body>
+</html>
