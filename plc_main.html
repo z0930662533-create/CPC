@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLC - 系統設備查詢</title>
+    <script>
+    // 通行證檢查
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "login.html"; 
+    }
+    </script>
+    <style>
+        /* ================= 基礎設定與排版 ================= */
+        body { font-family: '微軟正黑體', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background-color: #fff; width: 100%; max-width: 1000px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #003366; margin-bottom: 30px; padding-bottom: 10px; }
+        .page-title { color: #003366; font-size: 32px; margin: 0; }
+        .back-btn { background-color: #f4f7f6; border: 1px solid #ccc; padding: 8px 16px; border-radius: 6px; text-decoration: none; color: #333; font-weight: bold; transition: 0.3s; }
+        .back-btn:hover { background-color: #003366; color: white; }
+
+        .control-row { display: flex; align-items: center; margin-bottom: 20px; font-size: 18px; background-color: #f9f9f9; padding: 15px 20px; border-radius: 8px; border-left: 4px solid #003366; }
+        .control-label { font-weight: bold; margin-right: 15px; min-width: 80px; }
+        select { padding: 8px 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; outline: none; cursor: pointer; }
+        .equip-status-text { color: #d13030; font-weight: bold; margin-left: 20px; font-size: 18px; }
+        .display-area { margin-top: 30px; border: 2px dashed #ccc; border-radius: 8px; padding: 20px; min-height: 400px; background-color: #fafafa; }
+        table { width: 100%; border-collapse: collapse; background-color: white; }
+        th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; }
+        th { background-color: #003366; color: white; font-weight: normal; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-area">
+        <h1 id="page-title" class="page-title">載入中...</h1>
+        <a href="plc.html" class="back-btn">回工場列表</a> 
+    </div>
+
+    <div class="control-row">
+        <div class="control-label">設備編號</div>
+        <select id="equip-id"></select>
+        <span id="equip-status" class="equip-status-text"></span>
+    </div>
+
+    <div class="control-row">
+        <div class="control-label">顯示模式</div>
+        <div style="display: flex; gap: 20px;">
+            <label><input type="radio" name="display-type" value="table" checked> 表格</label>
+            <label><input type="radio" name="display-type" value="image"> 圖面</label>
+            <label><input type="radio" name="display-type" value="pdf"> 文件資料</label>
+        </div>
+    </div>
+
+    <div class="control-row">
+        <div class="control-label">設備資訊</div>
+        <select id="equip-info"></select>
+    </div>
+
+    <div id="display-area" class="display-area"></div>
+</div>
+
+<script>
+    // ================= 1. 選項與表頭設定 =================
+    // 🌟 修改 2：加入 PDF 的次選單選項
+    const infoOptions = {
+        table: [{ value: 'config', text: '配置' }, { value: 'ip', text: '網路IP' }, { value: 'auth', text: '登入權限' }],
+        image: [{ value: 'location', text: '位置' }, { value: 'panel', text: '盤內配置' }],
+        pdf:   [{ value: 'manual', text: '連線方式' },{ value: 'loop', text: '迴路圖' }] 
+    };
+
+    const tableHeaders = {
+        config: `<tr><th>模組名稱</th><th>型號</th><th>數量</th><th>廠牌</th></tr>`,
+        ip:     `<tr><th>介面</th><th>IP 位址</th><th>子網路遮罩</th></tr>`,
+        auth:   `<tr><th>權限等級</th><th>帳號</th><th>密碼</th></tr>`
+    };
+
+    // ================= 2. 🌟 終極資料庫 🌟 =================
+    // 🌟 修改 3：在每個工場物件裡加入 pdfDatabase
+    const factoryData = {
+        'up1': {  
+            title: '第一動力工場',
+            equipments: ['二鍋BMS', '三鍋BMS', 'co'],
+            statusDatabase: { '二鍋BMS': '', '三鍋BMS': '', 'co': '' },
+            tableDatabase: {
+                '二鍋BMS': {  },
+                '三鍋BMS': {  },
+                'co': {  }
+            },
+            imageDatabase: {
+                '二鍋BMS': {  },
+                '三鍋BMS': { },
+                'co': {  }
+            },
+            pdfDatabase: {
+                '二鍋BMS': {  },
+                '三鍋BMS': { },
+                'co': {  }
+            }
+        },
+        'up2': {  
+            title: '第一動力工場',
+            equipments: ['一鍋BMS', '四鍋BMS', 'TMC'],
+            statusDatabase: { '一鍋BMS': '', '四鍋BMS': '', 'TMC': '' },
+            tableDatabase: {
+                '一鍋BMS': {  },
+                '四鍋BMS': {  },
+                'TMC': {  }
+            },
+            imageDatabase: {
+                '一鍋BMS': {  },
+                '四鍋BMS': { },
+                'TMC': {  }
+            },
+            pdfDatabase: {
+                '一鍋BMS': {  },
+                '四鍋BMS': { },
+                'TMC': {  }
+            }
+        },
+        'psp': {  
+            title: '供電工場',
+            equipments: [],
+            statusDatabase: {  },
+            tableDatabase: {
+                
+            },
+            imageDatabase: {
+                
+            },
+            pdfDatabase: {
+                
+            }
+        },
+        'wsp': {  
+            title: '供水工場',
+            equipments: ['M-4681', '5PW', '6PW', 'C-4681'],
+            statusDatabase: { 'M-4681': '', '5PW': '', '6PW': '', 'C-4681': '' },
+            tableDatabase: {
+                'M-4681': {  },
+                '5PW': {  },
+                '6PW': {  },
+                'C-4681': {  }
+            },
+            imageDatabase: {
+                'M-4681': {  },
+                '5PW': { },
+                '6PW': {  },
+                'C-4681': {  }
+            },
+            pdfDatabase: {
+                 'M-4681': {  },
+                '5PW': { },
+                '6PW': {  },
+                'C-4681': {  }
+            }
+        },
+        'ref1': {  
+            title: '第一媒組工場',
+            equipments: ['Flare1', 'GB-251', 'REF1-ESD'],
+            statusDatabase: { 'Flare1': '', 'GB-251': '', 'REF1-ESD': '' },
+            tableDatabase: {
+                'Flare1': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO(地面)</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO(地面)</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO(地面)</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO(地面)</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>1</td><td>AB(地面)</td></tr>
+                     <tr><td>CPU</td><td>1747-L551C 5/05</td><td>1</td><td>AB(地面)</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1746-IB16</td><td>1</td><td>AB(地面)</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>1746-OW16</td><td>2</td><td>AB(地面)</td></tr>
+                     <tr><td>AO 4P</td><td>1746-NO4I</td><td>2</td><td>AB(地面)</td></tr>
+                     <tr><td>AO 8P</td><td>1746-NO48I</td><td>1</td><td>AB(地面)</td></tr>
+                     <tr><td>軟體規劃</td><td>RSLogix 500</td><td>1</td><td>AB(地面)</td></tr>
+                     <tr><td>CPU</td><td>SLC 500</td><td>1</td><td>AB(控制室)</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1746-IB16</td><td>1</td><td>AB(控制室)</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1746-OB16</td><td>1</td><td>AB(控制室)</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-OW16</td><td>1</td><td>AB(控制室)</td></tr>
+                     <tr><td>AO 4P</td><td>1746-NO4I</td><td>2</td><td>AB(控制室)</td></tr>
+                     <tr><td>AO 8P</td><td>1746-NO8I</td><td>1</td><td>AB(控制室)</td></tr>
+                     <tr><td>軟體規劃</td><td>RSLogix 500</td><td>1</td><td>AB(控制室)</td></tr>` },
+                'GB-251': {  },
+                'REF1-ESD': {  }
+            },
+            imageDatabase: {
+                'Flare1': {  },
+                'GB-251': { },
+                'REF1-ESD': {  }
+            },
+            pdfDatabase: {
+                'Flare1': { },
+                'GB-251': { },
+                'REF1-ESD': { }
+            }
+        },
+        'ref2': { 
+            title: '第二媒組工場',
+            equipments: ['M-303A', 'C-201/202', 'M-403', 'C-101A/B', 'C-301A/B', 'C-302A/B', 'C-303A/B', 'REF2-ESD'],
+            statusDatabase: { 'M-303A':'', 'C-201/202':'', 'M-403':'', 'C-101A/B':'', 'C-301A/B':'', 'C-302A/B':'', 'C-303A/B':'', 'REF2-ESD':'' },
+            tableDatabase: {
+                'M-303A': { config: `<tr><td>Power Supply</td><td>1756-PA72IC</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>L61</td><td>1</td><td>AB</td></tr>
+                     <tr><td>EtherNet/IP</td><td></td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>Modbus Rtu Card</td><td>MVI56-MCM</td><td>1</td><td>AB</td></tr>
+                     <tr><td>HMI</td><td>2711P-RDT10C SERB</td><td>1</td><td>AB</td></tr>` },
+                'C-201/202': { },
+                'M-403': {  },
+                'C-101A/B': {  },
+                'C-301A/B': {  },
+                'C-302A/B': {  },
+                'C-303A/B': {  },
+                'REF2-ESD': {  }
+
+            },
+            imageDatabase: {
+                'M-303A': {  },
+                'C-201/202': { },
+                'M-403': {  },
+                'C-101A/B': {  },
+                'C-301A/B': {  },
+                'C-302A/B': {  },
+                'C-303A/B': {  },
+                'REF2-ESD': {  }
+            },
+            pdfDatabase: {
+                'M-303A': { },
+                'C-201/202': { },
+                'M-403': {  },
+                'C-101A/B': {  },
+                'C-301A/B': {  },
+                'C-302A/B': {  },
+                'C-303A/B': {  },
+                'REF2-ESD': {  }
+            }
+        },
+        'top1': { 
+            title: '第一蒸餾工場',
+            equipments: ['BA-101', 'TOP1-ESD'],
+            statusDatabase: { 'BA-101':'', 'TOP1-ESD':''},
+            tableDatabase: {
+                'BA-101': { config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
+                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
+                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>` },
+                'TOP1-ESD': { }
+
+            },
+            imageDatabase: {
+                'BA-101': {  },
+                'TOP1-ESD': { }
+            },
+            pdfDatabase: {
+               'BA-101': {  },
+                'TOP1-ESD': { }
+            }
+        },
+        'top2': { 
+            title: '第二蒸餾工場',
+            equipments: ['Flare3', 'TOP2-ESD'],
+            statusDatabase: { 'Flare3':'', 'TOP2-ESD':''},
+            tableDatabase: {
+                'Flare3': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(AC) 16P</td><td>D4-16TA</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DO(AC) 16P</td><td>U-25T</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>AI 4P</td><td>U01 AD-1</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>` },
+                'TOP2-ESD': { }
+
+            },
+            imageDatabase: {
+                'Flare3': {  },
+                'TOP2-ESD': { }
+            },
+            pdfDatabase: {
+              'Flare3': {  },
+              'TOP2-ESD': { }
+            }
+        },
+        'jp': { 
+            title: '航空燃油工場',
+            equipments: ['HPU2', 'GB-8010', 'GB-802A/B', 'GB-801A', 'GB-803', 'JP-ESD'],
+            statusDatabase: { 'HPU2':'', 'GB-8010':'', 'GB-802A/B':'', 'GB-801A':'', 'GB-803':'', 'JP-ESD':'' },
+            tableDatabase: {
+                'HPU2': { config: `<tr><td>Power Supply</td><td>1756-PA72IC</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>L61</td><td>1</td><td>AB</td></tr>
+                     <tr><td>EtherNet/IP</td><td></td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>Modbus Rtu Card</td><td>MVI56-MCM</td><td>1</td><td>AB</td></tr>
+                     <tr><td>HMI</td><td>2711P-RDT10C SERB</td><td>1</td><td>AB</td></tr>` },
+                'GB-8010': { },
+                'GB-802A/B': {  },
+                'GB-801A': {  },
+                'GB-803': {  },
+                'JP-ESD': {  }
+
+            },
+            imageDatabase: {
+                'HPU2': {  },
+                'GB-8010': { },
+                'GB-802A/B': {  },
+                'GB-801A': {  },
+                'GB-803': {  },
+                'JP-ESD': {  }
+            },
+            pdfDatabase: {
+                'HPU2': {  },
+                'GB-8010': { },
+                'GB-802A/B': {  },
+                'GB-801A': {  },
+                'GB-803': {  },
+                'JP-ESD': {  }
+            }
+        },
+        'dhds2': { 
+            title: '第二柴油加氫脫硫工場',
+            equipments: ['C-101', 'C-102', 'DHDS2-ESD'],
+            statusDatabase: { 'C-101':'', 'C-102':'', 'DHDS2-ESD':'' },
+            tableDatabase: {
+                'C-101': { config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>4</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>5</td><td>AB</td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>` },
+                'C-102': { config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>4</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>5</td><td>AB</td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>` },
+                'DHDS2-ESD': {  }
+
+            },
+            imageDatabase: {
+                'C-101': {  },
+                'C-102': { },
+                'DHDS2-ESD': {  }
+            },
+            pdfDatabase: {
+                'C-101': {  },
+                'C-102': { },
+                'DHDS2-ESD': {  }
+            }
+        },
+        'esp': { 
+            title: '東區硫磺工場',
+            equipments: ['ESD-4S', 'ESD-5S'],
+            statusDatabase: { 'ESD-4S': '', 'ESD-5S': '' },
+            tableDatabase: {
+                'ESD-4S': { },
+                'ESD-5S': { }
+            },
+            imageDatabase: {
+                'ESD-4S': { },
+                'ESD-5S': { }
+            },
+            // 如果該工場還沒建置 PDF 資料，保留空物件即可，程式會自動防呆
+            pdfDatabase: {
+                'ESD-4S': { },
+                'ESD-5S': { }
+            } 
+        },
+        'hpu': { 
+            title: '氫氣工場',
+            equipments: ['PSA-2H', 'PSA1-3H', 'PSA2-3H', 'C-2003A/B-2H', '2HA', 'C-2203B-2H', 'ESD-2H', 'ESD-3H'],
+            statusDatabase: { 'PSA-2H':'', 'PSA1-3H':'', 'PSA2-3H':'', 'C-2003A/B-2H':'', '2HA':'', 'C-2203B-2H':'', 'ESD-2H':'', 'ESD-3H':'' },
+            tableDatabase: {
+                'PSA-2H': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>SLC 500</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1746-IB16</td><td>3</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1746-OB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-OW16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AO 4P</td><td>1746-NO4I</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1746-NO8I</td><td>2</td><td>AB</td></tr>
+                     <tr><td>軟體規劃</td><td>RSLogix 500</td><td>1</td><td>AB</td></tr>` },
+                'PSA1-3H': {config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>` },
+                'PSA2-3H': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>` },
+                'C-2003A/B-2H': {config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                      <tr><td>Ethernet</td><td>1756-EN2T</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>3</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>4</td><td>AB</td></tr>` },
+                '2HA': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>` },
+                'C-2203B-2H': {  config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>3</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>4</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>` },
+                'ESD-2H': {  },
+                'ESD-3H': {  }
+
+            },
+            imageDatabase: {
+                'PSA-2H': {  },
+                'PSA1-3H': { },
+                'PSA2-3H': {  },
+                'C-2003A/B-2H': {  },
+                '2HA': {  },
+                'C-2203B-2H': {  },
+                'ESD-2H': {  },
+                'ESD-3H': {  }
+            },
+            pdfDatabase: {
+                'M-303A': { },
+                'C-201/202': { },
+                'M-403': {  },
+                'C-101A/B': {  },
+                'C-301A/B': {  },
+                'C-302A/B': {  },
+                'C-303A/B': {  },
+                'REF2-ESD': {  }
+            }
+        },
+        'r1': { 
+            title: '第一重油脫硫工場',
+            equipments: ['M-1001', 'C-1003A/B', 'R1A', 'R1-ESD'],
+            statusDatabase: { 'M-1001':'', 'C-1003A/B':'', 'R1A':'', 'R1-ESD':'' },
+            tableDatabase: {
+                'M-1001': { config: `<tr><td>CPU</td><td>D4-450</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>DI(AC) 16P</td><td>U-25N</td><td>3</td><td>KOYO</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-16TR</td><td>2</td><td>KOYO</td></tr>
+                     <tr><td>軟體規劃</td><td>Directsoft5</td><td>1</td><td>KOYO</td></tr>
+                     <tr><td>Power</td><td>1746-P2</td><td>2</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>SLC 500</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1746-IB16</td><td>3</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1746-OB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(Relay) 16P</td><td>D4-OW16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AO 4P</td><td>1746-NO4I</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1746-NO8I</td><td>2</td><td>AB</td></tr>
+                     <tr><td>軟體規劃</td><td>RSLogix 500</td><td>1</td><td>AB</td></tr>`},
+                'C-1003A/B': { config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L73</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>3</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>3</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`},
+                'R1A': {  },
+                'R1-ESD': {  }
+
+            },
+            imageDatabase: {
+                'M-1001': {  },
+                'C-1003A/B': { },
+                'R1A': {  },
+                'R1-ESD': {  }
+            },
+            pdfDatabase: {
+                'M-1001': {  },
+                'C-1003A/B': { },
+                'R1A': {  },
+                'R1-ESD': {  }
+            }
+        },
+        'r2': { 
+            title: '第二重油脫硫工場',
+            equipments: ['R2-ESD'],
+            statusDatabase: { 'R2-ESD':''},
+            tableDatabase: {
+                'R2-ESD': {  }
+
+            },
+            imageDatabase: {
+                'R2-ESD': {  }
+            },
+            pdfDatabase: {
+               'R2-ESD': {  }
+            }
+        },
+        'wsp': { 
+            title: '西區硫磺工場',
+            equipments: ['GB-3401/S-2S', 'Flare2-3S', 'BA-3401-3S', 'C-6301/S-3S', '3SA', 'ESD-2S', 'ESD-3S'],
+            statusDatabase: { 'GB-3401/S-2S':'', 'Flare2-3S':'', 'BA-3401-3S':'', 'C-6301/S-3S':'', '3SA':'', 'ESD-2S':'','ESD-3S':'' },
+            tableDatabase: {
+                'GB-3401/S-2S': { config: `<tr><td>Power Supply</td><td>1756-PA72IC</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>L61</td><td>1</td><td>AB</td></tr>
+                     <tr><td>EtherNet/IP</td><td></td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>Modbus Rtu Card</td><td>MVI56-MCM</td><td>1</td><td>AB</td></tr>
+                     <tr><td>HMI</td><td>2711P-RDT10C SERB</td><td>1</td><td>AB</td></tr>` },
+                'Flare2-3S': { },
+                'BA-3401-3S': {  },
+                'C-6301/S-3S': {  },
+                '3SA': {  },
+                'ESD-2S': {  },
+                'ESD-3S': {  }
+                
+
+            },
+            imageDatabase: {
+                'GB-3401/S-2S': {  },
+                'Flare2-3S': { },
+                'BA-3401-3S': {  },
+                'C-6301/S-3S': {  },
+                '3SA': {  },
+                'ESD-2S': {  },
+                'ESD-3S': {  }
+            },
+            pdfDatabase: {
+                'GB-3401/S-2S': {  },
+                'Flare2-3S': { },
+                'BA-3401-3S': {  },
+                'C-6301/S-3S': {  },
+                '3SA': {  },
+                'ESD-2S': {  },
+                'ESD-3S': {  }
+            }
+        },
+        'alky': { 
+            title: '烷化工場',
+            equipments: ['F-325', 'F-324', 'C-101', 'C-301', 'C-401A/B', 'M-510', 'M-520', 'alky-ESD'],
+            statusDatabase: { 'F-325':'', 'F-324':'', 'C-101':'', 'C-301':'', 'C-401A/B':'', 'M-510':'', 'M-520':'', 'alky-ESD':'' },
+            tableDatabase: {
+                'F-325': { config: `<tr><td>Power Supply</td><td>1756-PA72IC</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>L61</td><td>1</td><td>AB</td></tr>
+                     <tr><td>EtherNet/IP</td><td></td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 16P</td><td>1756-IB16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                     <tr><td>Modbus Rtu Card</td><td>MVI56-MCM</td><td>1</td><td>AB</td></tr>
+                     <tr><td>HMI</td><td>2711P-RDT10C SERB</td><td>1</td><td>AB</td></tr>` },
+                'F-324': { },
+                'C-101': {  },
+                'C-301': {  },
+                'C-401A/B': {  },
+                'M-510': {  },
+                'M-520': {  },
+                'alky-ESD': {  }
+
+            },
+            imageDatabase: {
+                'F-325': {  },
+                'F-324': { },
+                'C-101': {  },
+                'C-301': {  },
+                'C-401A/B': {  },
+                'M-510': {  },
+                'M-520': {  },
+                'alky-ESD': {  }
+            },
+            pdfDatabase: {
+               'F-325': {  },
+                'F-324': { },
+                'C-101': {  },
+                'C-301': {  },
+                'C-401A/B': {  },
+                'M-510': {  },
+                'M-520': {  },
+                'alky-ESD': {  }
+            }
+        },
+        'ghds': { 
+            title: '汽油加氫脫硫工場',
+            equipments: ['C-8002'],
+            statusDatabase: { 'C-8002':''},
+            tableDatabase: {
+                'C-8002': {  }
+
+            },
+            imageDatabase: {
+                'C-8002': {  }
+            },
+            pdfDatabase: {
+               'C-8002': {  }
+            }
+        },
+        'ler': { 
+            title: '轉化處理工場',
+            equipments: ['C-7325', 'PKG-7701', 'LER-ESD'],
+            statusDatabase: { 'C-7325':'', 'PKG-7701':'', 'LER-ESD':'' },
+            tableDatabase: {
+                'C-7325': { },
+                'PKG-7701': { config:`<tr><td>Power Supply</td><td>1747-P4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1747-L533C/D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1746-BAS-5/02</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC) 16P</td><td>1746-IB16</td><td>4</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1746-OB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1746-NI8</td><td>3</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1746-NO4I</td><td>3</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1746-A10</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1746-A13</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Memory</td><td>1746-M11</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-RN6</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K10C6A6</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-RDK10C</td><td>1</td><td>AB</td></tr>`},
+                'LER-ESD': {  }
+
+            },
+            imageDatabase: {
+                'C-7325': {  },
+                'PKG-7701': { },
+                'LER-ESD': {  }
+            },
+            pdfDatabase: {
+                'C-7325': {  },
+                'PKG-7701': { },
+                'LER-ESD': {  }
+            }
+        },
+        'rfcc': { 
+            title: '重油轉化工場',
+            equipments: ['C-7901', 'Flare4', 'CO', 'C-7202', 'F-7101', 'MA-7606', 'PALL','PDCV-1003A','PDCV-1003B','PDCV-1003C','PKG-7101','PKG-7901','PKG-7902','RFCC-ESD','V-7601','C-7601','C-7202'],
+            statusDatabase: { 'C-7901':'', 'Flare4':'', 'CO':'', 'C-7202':'', 'F-7101':'', 'MA-7606':'', 'PALL':'' , 'PDCV-1003A':'', 'PDCV-1003B':'', 'PDCV-1003C':'', 'PKG-7101':'', 'PKG-7901':'', 'PKG-7902':'', 'RFCC-ESD':'', 'V-7601':'', 'C-7601':'', 'C-7202':''},
+            tableDatabase: {
+                'C-7901': { config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L33ER</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 32P</td><td>1769-IQ32</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OA16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1769-OF4CI</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RTD</td><td>1769-IR6</td><td>4</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>MVI56E-MCM</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-T7C22D9P</td><td>1</td><td>AB</td></tr>` },
+                'Flare4': { },
+                'CO': {  },
+                'C-7202': {  },
+                'F-7101': {  },
+                'MA-7606': {  },
+                'PALL': {  },
+                'PDCV-1003A': {  config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L71</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR IO</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR ETH</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>MVI56E-MCM</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RS-232/485 Converter</td><td>1783-ETAP</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A7</td><td>3</td><td>AB</td></tr>` },
+                'PDCV-1003B': {  config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L71</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR IO</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-EN2TR ETH</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Modbus Rtu Card</td><td>1756-Module IO</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RS-232/485 Converter</td><td>1783-ETAP</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A7</td><td>3</td><td>AB</td></tr>` },
+                'PDCV-1003C': { config: `<tr><td>Power Supply</td><td>1756-PB72</td><td>3</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L61B</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-CN2R</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-CN2T</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Communication</td><td>1756-CN2BR</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Redundancy</td><td>1756-RM</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 16P</td><td>1756-IF16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1756-OF4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RS-232/485 Converter</td><td>1761-NET-AIC</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-K4C20D</td><td>1</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-RN15C</td><td>1</td><td>AB</td></tr>`  },
+                'PKG-7101': {  },
+                'PKG-7901': {  },
+                'PKG-7902': {  },
+                'RFCC-ESD': {  },
+                'V-7601': { config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1769-IQ16/A</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 32P</td><td>1769-IQ32/A</td><td>1</td><td>AB</td></tr>
+                    <tr><td>DO(Relay) 16P</td><td>1769-OW16/A</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8/A</td><td>1</td><td>AB</td></tr>` },
+                'C-7601': {config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1756-L73/td><td>1</td><td>AB</td></tr>
+                    <tr><td>Ethernet</td><td>1756-EN2TR/td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1756-IB16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1756-OB16I/A</td><td>2</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td>AB</td></tr>`  },
+                'C-7202': {config: `<tr><td>Power Supply</td><td>1769-PA4</td><td>1</td><td>AB</td></tr>
+                    <tr><td>CPU</td><td>1769-L33ER/td><td>1</td><td>AB</td></tr>
+                    <tr><td>DI(DC)) 16P</td><td>1769-IQ16</td><td>2</td><td>AB</td></tr>
+                    <tr><td>DO(DC) 16P</td><td>1769-OB16</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AI 8P</td><td>1769-IF8</td><td>2</td><td>AB</td></tr>
+                    <tr><td>AI 4P</td><td>1769-IF4XOF2</td><td>1</td><td>AB</td></tr>
+                    <tr><td>AO 4P</td><td>1769-OF4CI</td><td>1</td><td>AB</td></tr>
+                    <tr><td>RTD</td><td>1769-IR6</td><td>3</td><td>AB</td></tr>
+                    <tr><td>HMI</td><td>2711P-T6C21D8S</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Terminator</td><td>1769-ECR</td><td>1</td><td>AB</td></tr>
+                    <tr><td>Chassis</td><td>1756-A4</td><td>2</td><td>AB</td></tr>
+                    <tr><td>SD Card</td><td>1784-SDHC8</td><td>1</td><td>AB</td></tr>`  }
+
+            },
+            imageDatabase: {
+                'C-7901': {  },
+                'Flare4': { },
+                'CO': {  },
+                'C-7202': {  },
+                'F-7101': {  },
+                'MA-7606': {  },
+                'PALL': {  },
+                'PDCV-1003A': {  },
+                'PDCV-1003B': {  },
+                'PDCV-1003C': {  },
+                'PKG-7101': {  },
+                'PKG-7901': {  },
+                'PKG-7902': {  },
+                'RFCC-ESD': {  },
+                'V-7601': {  },
+                'C-7601': {  },
+                'C-7202': {  }
+            },
+            pdfDatabase: {
+               'C-7901': {  },
+                'Flare4': { },
+                'CO': {  },
+                'C-7202': {  },
+                'F-7101': {  },
+                'MA-7606': {  },
+                'PALL': {  },
+                'PDCV-1003A': {  },
+                'PDCV-1003B': {  },
+                'PDCV-1003C': {  },
+                'PKG-7101': {  },
+                'PKG-7901': {  },
+                'PKG-7902': {  },
+                'RFCC-ESD': {  },
+                'V-7601': {  },
+                'C-7601': {  },
+                'C-7202': {  }
+            }
+        },
+        'swtp': { 
+            title: '廢棄物處理工場',
+            equipments: ['3PHASE', 'Liquid'],
+            statusDatabase: { '3PHASE':'', 'Liquid':''},
+            tableDatabase: {
+                '3PHASE': { config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 32P</td><td>1769-IQ32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 32P</td><td>1769-OB32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1769-IF16C/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1769-OF8C/A</td><td>1</td><td>AB</td></tr>`},
+                'Liquid': { config: `<tr><td>Power Supply</td><td>1769-PB4</td><td>1</td><td>AB</td></tr>
+                     <tr><td>CPU</td><td>1769-L35E</td><td>1</td><td>AB</td></tr>
+                     <tr><td>DI(DC) 32P</td><td>1769-IQ32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>DO(DC) 32P</td><td>1769-OB32/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AI 16P</td><td>1769-IF16C/A</td><td>2</td><td>AB</td></tr>
+                     <tr><td>AO 8P</td><td>1769-OF8C/A</td><td>1</td><td>AB</td></tr>` }
+
+            },
+            imageDatabase: {
+                '3PHASE': {  },
+                'Liquid': { }
+            },
+            pdfDatabase: {
+               '3PHASE': {  },
+                'Liquid': { }
+            }
+        },
+        'vgo': {  
+            title: '真空製汽油工場',
+            equipments: ['TMC', 'HPU3', 'MCC-R', 'C-1301'],
+            statusDatabase: { 'TMC': '', 'HPU3': '', 'MCC-R': '', 'C-1301': '' },
+            tableDatabase: {
+                'TMC': { },
+                'HPU3': {  },
+                'MCC-R': {  },
+                'C-1301': {  }
+            },
+            imageDatabase: {
+                'TMC': {  },
+                'HPU3': { },
+                'MCC-R': {  },
+                'C-1301': {  }
+            },
+            pdfDatabase: {
+               'TMC': {  },
+                'HPU3': { },
+                'MCC-R': {  },
+                'C-1301': {  }
+            }
+        },
+        'wwtp': {  
+            title: '廢水處理工場',
+            equipments: ['AirD', 'Wwtp-ESD'],
+            statusDatabase: { 'AirD': '', 'Wwtp-ESD': '' },
+            tableDatabase: {
+                'AirD': {  config: `<tr><td>Power Supply</td><td>1756-PB75</td><td>1</td><td></td></tr>
+                     <tr><td>CPU</td><td>1756-L73</td><td>1</td><td></td></tr>
+                     <tr><td>DI(VDC) 16P</td><td>1756-IB16</td><td>4</td><td></td></tr>
+                     <tr><td>DO(VDC) 16P</td><td>1756-OB16E</td><td>5</td><td></td></tr>
+                     <tr><td>Chassis</td><td>1756-A13</td><td>1</td><td></td></tr>`},
+                'Wwtp-ESD': {  }
+            },
+            imageDatabase: {
+                'AirD': {  },
+                'Wwtp-ESD': { }
+            },
+            pdfDatabase: {
+               'AirD': {  },
+                'Wwtp-ESD': { }
+            }
+        },
+        'fp1': {  
+            title: '第一灌裝工場',
+            equipments: ['ORS'],
+            statusDatabase: { 'ORS': '' },
+            tableDatabase: {
+                'ORS': {  }
+            },
+            imageDatabase: {
+                'ORS': {  }
+            },
+            pdfDatabase: {
+                'ORS': {  }
+            }
+        },
+        'fp2': {  
+            title: '第二灌裝工場',
+            equipments: ['LPAlarm'],
+            statusDatabase: { 'LPAlarm': '' },
+            tableDatabase: {
+                'LPAlarm': {  }
+            },
+            imageDatabase: {
+                'LPAlarm': {  }
+            },
+            pdfDatabase: {
+                'LPAlarm': {  }
+            }
+        },
+        'ns': {  
+            title: '南崁儲運課',
+            equipments: ['P-2001','AlarmP'],
+            statusDatabase: { 'P-2001':'', 'AlarmP':'' },
+            tableDatabase: {
+                'P-2001': {  },
+                'AlarmP': {  }
+            },
+            imageDatabase: {
+                'P-2001': {  },
+                'AlarmP': {  }
+            },
+            pdfDatabase: {
+                'P-2001': {  },
+                'AlarmP': {  }
+            }
+        },
+        'ws': {  
+            title: '五股儲運課',
+            equipments: [],
+            statusDatabase: {  },
+            tableDatabase: {
+               
+            },
+            imageDatabase: {
+               
+            },
+            pdfDatabase: {
+                
+            }
+        },
+        'afls': {  
+            title: '航燃灌裝課',
+            equipments: [],
+            statusDatabase: {  },
+            tableDatabase: {
+               
+            },
+            imageDatabase: {
+               
+            },
+            pdfDatabase: {
+                
+            }
+        },
+        'mos': {  
+            title: '海上作業課',
+            equipments: [],
+            statusDatabase: {  },
+            tableDatabase: {
+               
+            },
+            imageDatabase: {
+               
+            },
+            pdfDatabase: {
+                
+            }
+        },
+        'ogp': {  
+            title: '油氣處理課',
+            equipments: [],
+            statusDatabase: {  },
+            tableDatabase: {
+               
+            },
+            imageDatabase: {
+               
+            },
+            pdfDatabase: {
+                
+            }
+        },
+        'ss': {  
+            title: '沙崙儲運課',
+            equipments: ['BMT','OilAlarm','M-303'],
+            statusDatabase: { 'P-2001':'', 'OilAlarm':'','M-303':'' },
+            tableDatabase: {
+                'BMT': {  },
+                'AlarmP': {  },
+                'M-303': {  }
+            },
+            imageDatabase: {
+                'BMT': {  },
+                'AlarmP': {  },
+                'M-303': {  }
+            },
+            pdfDatabase: {
+                'BMT': {  },
+                'AlarmP': {  },
+                'M-303': {  }
+            }
+        },
+    };
+
+    // ================= 3. 抓取 HTML 元素 =================
+    const pageTitle = document.getElementById('page-title');
+    const equipSelect = document.getElementById('equip-id');
+    const infoSelect = document.getElementById('equip-info');
+    const radios = document.querySelectorAll('input[name="display-type"]');
+    const statusText = document.getElementById('equip-status');
+    const displayArea = document.getElementById('display-area');
+
+    // ================= 4. 解析網址參數 =================
+    let currentFactoryData = null;
+
+    function initPage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const factoryId = urlParams.get('factory'); 
+
+        if (!factoryId || !factoryData[factoryId]) {
+            alert('找不到該工場資料，將返回列表頁。');
+            window.location.href = 'plc.html'; 
+            return;
+        }
+
+        currentFactoryData = factoryData[factoryId];
+        pageTitle.textContent = currentFactoryData.title;
+        document.title = `PLC - ${currentFactoryData.title}`;
+
+        equipSelect.innerHTML = '';
+        currentFactoryData.equipments.forEach(eq => {
+            const opt = document.createElement('option');
+            opt.value = eq;
+            opt.textContent = eq;
+            equipSelect.appendChild(opt);
+        });
+
+        updateInfoDropdown();
+    }
+
+    // ================= 5. 渲染邏輯 =================
+    function updateInfoDropdown() {
+        const selectedType = document.querySelector('input[name="display-type"]:checked').value;
+        infoSelect.innerHTML = '';
+        infoOptions[selectedType].forEach(opt => {
+            const newOpt = document.createElement('option');
+            newOpt.value = opt.value;
+            newOpt.textContent = opt.text;
+            infoSelect.appendChild(newOpt);
+        });
+        renderContent();
+    }
+
+    function renderContent() {
+        if (!currentFactoryData) return;
+
+        const currentEquipId = equipSelect.value; 
+        const selectedType = document.querySelector('input[name="display-type"]:checked').value;
+        const selectedInfo = infoSelect.value;
+        
+        statusText.textContent = currentFactoryData.statusDatabase[currentEquipId] || '';
+        displayArea.innerHTML = ''; 
+
+        if (selectedType === 'table') {
+            const header = tableHeaders[selectedInfo];
+            let bodyRows = `<tr><td colspan="4" style="text-align:center; color:red;">目前尚無資料</td></tr>`;
+            
+            if (currentFactoryData.tableDatabase[currentEquipId] && currentFactoryData.tableDatabase[currentEquipId][selectedInfo]) {
+                bodyRows = currentFactoryData.tableDatabase[currentEquipId][selectedInfo];
+            }
+            displayArea.innerHTML = `<table>${header}${bodyRows}</table>`;
+        } 
+        else if (selectedType === 'image') {
+            let images = [];
+            if (currentFactoryData.imageDatabase[currentEquipId] && currentFactoryData.imageDatabase[currentEquipId][selectedInfo]) {
+                images = currentFactoryData.imageDatabase[currentEquipId][selectedInfo];
+            }
+            
+            if (images.length > 0) {
+                images.forEach(src => {
+                    displayArea.innerHTML += `<img src="${src}" alt="圖檔無法載入" style="max-width:100%; margin-bottom:20px; border: 2px solid #ddd;">`;
+                });
+            } else {
+                displayArea.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無圖檔</p>`;
+            }
+        }
+        // 🌟 修改 4：加入 PDF 渲染邏輯
+        else if (selectedType === 'pdf') {
+            let pdfPath = '';
+            
+            // 防呆機制：確保該工場有 pdfDatabase 且裡面有對應的資料
+            if (currentFactoryData.pdfDatabase && 
+                currentFactoryData.pdfDatabase[currentEquipId] && 
+                currentFactoryData.pdfDatabase[currentEquipId][selectedInfo]) {
+                pdfPath = currentFactoryData.pdfDatabase[currentEquipId][selectedInfo];
+            }
+            
+            if (pdfPath) {
+                displayArea.innerHTML = `
+                    <iframe src="${pdfPath}" width="100%" height="600px" style="border: none; border-radius: 8px;">
+                        很抱歉，您的瀏覽器不支援直接預覽 PDF。請下載後查看。
+                    </iframe>
+                `;
+            } else {
+                displayArea.innerHTML = `<p style="text-align:center; color:red; margin-top:50px;">目前尚無 ${currentEquipId} 的 PDF 檔案</p>`;
+            }
+        }
+    }
+
+    // ================= 6. 事件監聽與啟動 =================
+    radios.forEach(r => r.addEventListener('change', updateInfoDropdown));
+    equipSelect.addEventListener('change', renderContent);
+    infoSelect.addEventListener('change', renderContent);
+
+    // 啟動頁面
+    initPage(); 
+
+</script>
+</body>
+</html>
